@@ -67,7 +67,7 @@ specific error reporting. (BSON parsers in particular seem to be spread over
 several files.) On the other hand, bencode is closer to 50 lines to parse and 
 50 lines to serialize. While bsencode has the expressiveness of BSON it takes 
 only 69 lines to serialize and 107 to parse, including rather full reporting 
-for parse errors (without error reportiny it gets down to around 67 lines to 
+for parse errors (without error reporting it gets down to around 67 lines to 
 parse).
 
 # The rules of bsencode
@@ -102,7 +102,8 @@ In the Node.js implementation, symbols are unwrapped into strings, byte strings
 are unwrapped into Buffers, and lists are unwrapped into Arrays. Notice that 
 symbols do not admit of empty strings, for convenience in parsing.
 
-Extra whitespace is NOT allowed.
+Extra whitespace is NOT allowed in the core language. It could be allowed in a
+derivative language.
 
 ## Semantic rules
 
@@ -132,8 +133,8 @@ bsencode defines the following semantic types:
     the multi-line-mode flag `m`, in that order.  
 
 These last three are mostly illustrations of the ease with which bsencode can 
-be extended; I didn't need them but I have provided the core language with both
-just to show how it can be implemented easily. 
+be extended; I didn't need them but I have provided the core language with all
+three just to show how bsencode implements new types very easily. 
 
 ### Deeper into the details
 
