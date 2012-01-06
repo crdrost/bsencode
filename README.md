@@ -15,6 +15,8 @@ appears as text digits, for example. However, it is also in many ways inspired
 by [s-expressions](http://people.csail.mit.edu/rivest/Sexp.txt) and also 
 [BSON](http://bsonspec.org/). 
 
+[bencode]: http://wiki.theory.org/BitTorrentSpecification#Bencoding
+
 # What's the API?
 
 Very simple. Encoding:
