@@ -1,11 +1,11 @@
 /*global Buffer, exports */
-var bs = {}, exports = bs;
 
 // Regular expressions to validate the integrity of symbols, integers, and
 // nonnegative integers.
 var symbol = /^(?:null|false|true|0|-?[1-9]\d*)$/,
     non_negative = /^(?:0|[1-9]\d*)$/,
     int = /^(?:0|-?[1-9]\d*)$/,
+    iso_date = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
     re_flags = /^:g?i?m?$/;
 
 exports.decode = function (buff) {
@@ -48,7 +48,7 @@ exports.decode = function (buff) {
             check(current_is(":") && end !== null && end <= buff.length,
                 "invalid length specification.");
             start = current + 1;
-            current = end; 
+            current = end;
             return buff.slice(start, end);
         } else if (current_is("*", "z")) { // symbol
             start = current;
@@ -72,8 +72,13 @@ exports.decode = function (buff) {
                 return struct[1];
             case "date":
                 check(struct.length === 2 && typeof struct[1] === 'string' &&
-                    int.exec(struct[1]), "expected one integer symbol.");
-                return new Date(JSON.parse(struct[1]));
+                    iso_date.test(struct[1]), "expected a date symbol.");
+                try {
+                    return new Date(struct[1]);
+                } catch (e) {
+                    check(false, "expected a valid date specification.");
+                    break; // jslint cannot see that check throws an exception.
+                }
             case "dict":
                 out = {};
                 struct.slice(1).forEach(function (x, i) {
@@ -81,7 +86,7 @@ exports.decode = function (buff) {
                     check(x instanceof Array && x.length === 2,
                         "not a valid (key, val) pair.");
                     var key = inflate(x[0]), val = inflate(x[1]);
-                    check(typeof key === "string" && out.hasOwnProperty(key),
+                    check(typeof key === "string" && !out.hasOwnProperty(key),
                         "invalid key.");
                     out[key] = val;
                 });
@@ -89,7 +94,7 @@ exports.decode = function (buff) {
             case "float":
                 check(struct.length === 2 && Buffer.isBuffer(struct[1]),
                     "expected one byte string.");
-                return struct[1].readDoubleLE(0);
+                return new Number(struct[1].readDoubleLE(0));
             case "regex":
                 check(struct.length === 3 && Buffer.isBuffer(struct[1]) &&
                     typeof struct[2] === "string" && re_flags.test(struct[2]),
@@ -98,8 +103,8 @@ exports.decode = function (buff) {
                     return new RegExp(inflate(struct[1]), struct[2].substr(1));
                 } catch (e) {
                     check(false, "expected a valid regex specification.");
+                    break; // jslint cannot see that check throws an exception.
                 }
-                return null; // unreachable; jslint can't see the exception.
             default:
                 return struct.map(function (x, i) {
                     current = struct.positions[i + 1]; // for error tracing
@@ -122,11 +127,13 @@ exports.encode = function (object) {
         var k, keys, flags, buff, str;
         if (typeof o === "boolean") {
             return o.toString();
-        } else if (typeof o === "number" && isFinite(o)) {
+        } else if ((o instanceof Number || typeof o === "number") && 
+                isFinite(o)) {
             buff = new Buffer(8);
             buff.writeDoubleLE(o, 0);
             str = JSON.stringify(o);
-            return str.match(/[.e]/) ? ["float", buff] : str;
+            return o instanceof Number || str.match(/[.e]/) ? 
+                ["float", buff] : str;
         } else if (typeof o === "string" || o instanceof String) {
             return new Buffer(o, 'utf8');
         } else if (o instanceof Array) {
@@ -134,7 +141,7 @@ exports.encode = function (object) {
         } else if (Buffer.isBuffer(o)) {
             return ["bin", o];
         } else if (o instanceof Date) {
-            return ["date", JSON.stringify(o.getTime())];
+            return ["date", o.toISOString()];
         } else if (o instanceof RegExp) {
             flags = ":" + (o.global ? 'g' : '') + (o.ignoreCase ? 'i' : '') +
                 (o.multiline ? 'm' : '');
