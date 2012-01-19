@@ -1,7 +1,7 @@
 /*global require, Buffer */
 /*jslint bitwise: true */
 var crypto = require("crypto"),
-    bs = require("./bsencode.js");
+    bs = require("./node/bsencode.js");
 
 /* adso implementation for Node.js.
  *
