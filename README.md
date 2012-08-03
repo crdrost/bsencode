@@ -97,7 +97,7 @@ primitives:
 
 So for example, the ASCII string `(1 2 34 '5:abcde)` is a valid bsencoded
 string; it syntactically contains one list, which contains three symbols
-followed by one byte string of four bytes.
+followed by one byte string of five bytes.
 
 In the Node.js implementation, symbols are unwrapped into strings, byte strings
 are unwrapped into Buffers, and lists are unwrapped into Arrays. Notice that
